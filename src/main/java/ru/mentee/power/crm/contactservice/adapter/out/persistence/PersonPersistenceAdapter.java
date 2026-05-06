@@ -2,7 +2,6 @@ package ru.mentee.power.crm.contactservice.adapter.out.persistence;
 
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.mentee.power.crm.contactservice.adapter.out.persistence.entity.PersonEntity;
@@ -25,14 +24,12 @@ public class PersonPersistenceAdapter implements PersonOutPort {
 
   @Override
   public Optional<Person> findByEmail(String email) {
-    return repository.findByEmail(email)
-        .map(mapper::toDomain);
+    return repository.findByEmail(email).map(mapper::toDomain);
   }
 
   @Override
   public Optional<Person> findById(UUID id) {
-    return repository.findById(id)
-        .map(mapper::toDomain);
+    return repository.findById(id).map(mapper::toDomain);
   }
 
   @Override

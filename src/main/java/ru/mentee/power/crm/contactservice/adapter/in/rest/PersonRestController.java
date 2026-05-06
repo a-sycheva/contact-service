@@ -2,7 +2,6 @@ package ru.mentee.power.crm.contactservice.adapter.in.rest;
 
 import java.net.URI;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,5 +33,4 @@ public class PersonRestController implements PersonsApi {
     Person person = getPersonUseCase.getById(id);
     return ResponseEntity.ok(mapper.toResponse(person));
   }
-
 }

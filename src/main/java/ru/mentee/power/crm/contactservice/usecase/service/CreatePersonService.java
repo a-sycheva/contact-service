@@ -1,9 +1,6 @@
 package ru.mentee.power.crm.contactservice.usecase.service;
 
-import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import ru.mentee.power.crm.contactservice.domain.exception.BusinessRuleViolationException;
 import ru.mentee.power.crm.contactservice.domain.model.Person;
@@ -18,7 +15,8 @@ public class CreatePersonService implements CreatePersonUseCase {
   @Override
   public Person create(Person person) {
     if (personOutPort.existsByEmail(person.getEmail())) {
-      throw new BusinessRuleViolationException("Person with email " + person.getEmail() + " already exists");
+      throw new BusinessRuleViolationException(
+          "Person with email " + person.getEmail() + " already exists");
     }
 
     return personOutPort.save(person);

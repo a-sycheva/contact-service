@@ -2,7 +2,6 @@ package ru.mentee.power.crm.contactservice.usecase.service;
 
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.mentee.power.crm.contactservice.domain.exception.EntityNotFoundException;
@@ -13,11 +12,12 @@ import ru.mentee.power.crm.contactservice.usecase.port.out.PersonOutPort;
 @Service
 @RequiredArgsConstructor
 public class GetPersonService implements GetPersonUseCase {
-  private  final PersonOutPort personOutPort;
+  private final PersonOutPort personOutPort;
 
   @Override
   public Person getById(UUID id) {
-    return personOutPort.findById(id)
+    return personOutPort
+        .findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Person with id " + id + " not found"));
   }
 

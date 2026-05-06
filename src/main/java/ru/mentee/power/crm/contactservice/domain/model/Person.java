@@ -1,10 +1,8 @@
 package ru.mentee.power.crm.contactservice.domain.model;
 
 import java.util.UUID;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
@@ -28,5 +26,4 @@ public class Person {
     person.phone = phone;
     return person;
   }
-
 }
