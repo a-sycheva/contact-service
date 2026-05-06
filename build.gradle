@@ -31,7 +31,7 @@ ext {
     springdocVersion = '2.8.3'
     openapiNullableVersion = '0.2.10'
     wiremockVersion = '3.13.2'
-    testcontainersVersion = '1.19.3'
+    testcontainersVersion = '2.0.5'
     springCloudVersion = '2024.0.1'
 }
 
@@ -189,7 +189,10 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
-                    '**/Application.class',
+                    '**/ContactServiceApplication.class',
+                    '**/adapter/in/rest/api/**',
+                    '**/adapter/in/rest/dto/**',
+                    '**/*MapperImpl.class',
                     '**/generated/**'
             ])
         }))
@@ -209,7 +212,10 @@ jacocoTestCoverageVerification {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
-                    '**/Application.class',
+                    '**/ContactServiceApplication.class',
+                    '**/adapter/in/rest/api/**',
+                    '**/adapter/in/rest/dto/**',
+                    '**/*MapperImpl.class',
                     '**/generated/**'
             ])
         }))
