@@ -2,25 +2,128 @@ openapi: 3.1.0
 info:
   title: Contact Service API
   version: 1.0.0
-  description: API для управления контактами
-
+  description:  Реестр физических лиц (Person) и организаций (Company) MCRM.
 servers:
-  - url: http://localhost:8080
-    description: Local development server
+  - url: http://contact-service:8080
+    description: Service-to-service через Docker network
+  - url: https://api.mcrm.ru
+    description: External access через api-gateway
+
+tags:
+  - name: persons
+    description: CRUD операций с физическими лицами
 
 paths:
-  /health:
+  /api/v1/persons:
+    post:
+      tags: [persons]
+      operationId: createPerson
+      summary: Создать физическое лицо
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '201':
+          description: Создан
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+              description: /api/v1/persons/{id}
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/EmailConflict' }
+
+  /api/v1/persons/{id}:
     get:
-      summary: Health check endpoint
-      operationId: healthCheck
+      tags: [ persons ]
+      operationId: getPersonById
+      summary: Получить физическое лицо по ID
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: UP
+              schema: { $ref: '#/components/schemas/PersonResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  schemas:
+    CreatePersonRequest:
+      type: object
+      required: [fullName, email]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        phone: { type: string, maxLength: 50, nullable: true }
+
+    PersonResponse:
+      type: object
+      required: [id, fullName, email, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+
+    Problem:
+      type: object
+      description: RFC 7807 Problem Details (см. _shared/error-standard.md)
+      required: [type, title, status, errorCode]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI идентифицирующий тип ошибки
+        title:
+          type: string
+          description: Краткое описание
+        status:
+          type: integer
+          description: HTTP статус код
+        detail:
+          type: string
+          description: Детальное описание
+        instance:
+          type: string
+          description: URI запроса, вызвавшего ошибку
+        errorCode:
+          type: string
+          description: Машинный код ошибки (CRM стандарт)
+        service:
+          type: string
+          description: Имя сервиса, вернувшего ошибку
+        timestamp:
+          type: string
+          format: date-time
+          description: Время ошибки в формате ISO 8601
+        traceId:
+          type: string
+          format: uuid
+          description: Correlation ID для трассировки
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    EmailConflict:
+      description: Email уже существует (errorCode=PERSON_EMAIL_CONFLICT)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
