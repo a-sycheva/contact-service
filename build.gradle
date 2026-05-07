@@ -31,7 +31,7 @@ ext {
     springdocVersion = '2.8.3'
     openapiNullableVersion = '0.2.10'
     wiremockVersion = '3.13.2'
-    testcontainersVersion = '1.19.3'
+    testcontainersVersion = '2.0.5'
     springCloudVersion = '2024.0.1'
 }
 
@@ -72,7 +72,7 @@ dependencies {
 
     // ---- Resilience4j ----
     implementation "io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}"
-    implementation "io.github.resilience4j:resilience4j-feign:${resilience4jVersion}"
+    //implementation "io.github.resilience4j:resilience4j-feign:${resilience4jVersion}"
 
     // crm-platform-component (future)
     //implementation 'ru.mentee.power.crm:crm-platform-component:0.1.0'
@@ -88,10 +88,10 @@ dependencies {
 // ---- OpenAPI Generator ----
 openApiGenerate {
     generatorName = "spring"
-    inputSpec = "${projectDir}/src/main/resources/api/openapi-v1.yaml"
-    outputDir = "${buildDir}/generated/openapi"
-    apiPackage = "ru.mentee.power.crm.contactservice.adapter.out.client.api"
-    modelPackage = "ru.mentee.power.crm.contactservice.adapter.out.client.model"
+    inputSpec = "${projectDir}/src/main/resources/api/openapi-v1.yaml".replace('\\', '/')
+    outputDir = "${buildDir}/generated/openapi"     //если не надо пушить outputDir = "${projectDir}/src/main/java"
+    apiPackage = "ru.mentee.power.crm.contactservice.adapter.in.rest.api"
+    modelPackage = "ru.mentee.power.crm.contactservice.adapter.in.rest.dto"
     configOptions = [
             interfaceOnly         : 'true',
             useSpringBoot3        : 'true',
@@ -103,6 +103,7 @@ openApiGenerate {
             skipDefaultInterface  : 'true',
             additionalModelTypeAnnotations: '@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)'
     ]
+
 }
 
 // ---- Подключить сгенерированные файлы ----
@@ -188,7 +189,10 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
-                    '**/Application.class',
+                    '**/ContactServiceApplication.class',
+                    '**/adapter/in/rest/api/**',
+                    '**/adapter/in/rest/dto/**',
+                    '**/*MapperImpl.class',
                     '**/generated/**'
             ])
         }))
@@ -208,7 +212,10 @@ jacocoTestCoverageVerification {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
-                    '**/Application.class',
+                    '**/ContactServiceApplication.class',
+                    '**/adapter/in/rest/api/**',
+                    '**/adapter/in/rest/dto/**',
+                    '**/*MapperImpl.class',
                     '**/generated/**'
             ])
         }))
