@@ -12,13 +12,17 @@ import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.UpdatePersonReques
 import ru.mentee.power.crm.contactservice.adapter.in.rest.mapper.PersonRestMapper;
 import ru.mentee.power.crm.contactservice.domain.model.Person;
 import ru.mentee.power.crm.contactservice.usecase.port.in.CreatePersonUseCase;
+import ru.mentee.power.crm.contactservice.usecase.port.in.DeletePersonUseCase;
 import ru.mentee.power.crm.contactservice.usecase.port.in.GetPersonUseCase;
+import ru.mentee.power.crm.contactservice.usecase.port.in.UpdatePersonUseCase;
 
 @RestController
 @RequiredArgsConstructor
 public class PersonRestController implements PersonsApi {
   private final CreatePersonUseCase createPersonUseCase;
   private final GetPersonUseCase getPersonUseCase;
+  private final DeletePersonUseCase deletePersonUseCase;
+  private final UpdatePersonUseCase updatePersonUseCase;
   private final PersonRestMapper mapper;
 
   @Override
@@ -31,12 +35,17 @@ public class PersonRestController implements PersonsApi {
 
   @Override
   public ResponseEntity<Void> deletePerson(UUID id) {
-    return null;
+    deletePersonUseCase.deletePerson(id);
+    return ResponseEntity.noContent().build();
   }
 
   @Override
-  public ResponseEntity<PersonResponse> updatePerson(UUID id, UpdatePersonRequest updatePersonRequest) {
-    return null;
+  public ResponseEntity<PersonResponse> updatePerson(
+      UUID id, UpdatePersonRequest updatePersonRequest) {
+    Person person = getPersonUseCase.getById(id);
+    mapper.updateEntity(updatePersonRequest, person);
+    Person updatedPerson = updatePersonUseCase.updatePerson(id, person);
+    return ResponseEntity.ok(mapper.toResponse(updatedPerson));
   }
 
   @Override
@@ -44,5 +53,4 @@ public class PersonRestController implements PersonsApi {
     Person person = getPersonUseCase.getById(id);
     return ResponseEntity.ok(mapper.toResponse(person));
   }
-
 }

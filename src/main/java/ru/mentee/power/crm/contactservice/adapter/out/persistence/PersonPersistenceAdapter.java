@@ -23,6 +23,28 @@ public class PersonPersistenceAdapter implements PersonOutPort {
   }
 
   @Override
+  public boolean delete(UUID id) {
+    if (repository.existsById(id)) {
+      repository.deleteById(id);
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public Optional<Person> update(Person person) {
+    return repository
+        .findById(person.getId())
+        .map(
+            existingEntity -> {
+              existingEntity.setFullName(person.getFullName());
+              existingEntity.setEmail(person.getEmail());
+              existingEntity.setPhone(person.getPhone());
+              return mapper.toDomain(repository.save(existingEntity));
+            });
+  }
+
+  @Override
   public Optional<Person> findByEmail(String email) {
     return repository.findByEmail(email).map(mapper::toDomain);
   }
@@ -35,5 +57,10 @@ public class PersonPersistenceAdapter implements PersonOutPort {
   @Override
   public boolean existsByEmail(String email) {
     return repository.existsByEmail(email);
+  }
+
+  @Override
+  public boolean existsById(UUID id) {
+    return repository.existsById(id);
   }
 }
