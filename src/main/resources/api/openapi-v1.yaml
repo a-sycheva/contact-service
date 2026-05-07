@@ -37,6 +37,30 @@ paths:
               schema: { $ref: '#/components/schemas/PersonResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/EmailConflict' }
+    get:
+      tags: [persons]
+      operationId: listPersons
+      summary: Пагинированный список физических лиц (с поиском по email)
+      parameters:
+        - { name: email, in: query, schema: { type: string, format: email }, description: Частичное совпадение LIKE %email% }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, default: 20 } }
+      responses:
+        '200':
+          description: Страница Person
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageResponse'
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/PersonResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+
 
   /api/v1/persons/{id}:
     get:
@@ -74,6 +98,15 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
+    PageResponse:
+      type: object
+      required: [ content, page, size, totalElements, totalPages ]
+      properties:
+        content: { type: array, items: { } }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
 
     Problem:
       type: object

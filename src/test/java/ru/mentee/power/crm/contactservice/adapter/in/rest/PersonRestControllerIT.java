@@ -178,4 +178,116 @@ class PersonRestControllerIT {
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
   }
+
+  @Test
+  void listPersonsShouldReturnOkWhenFilteredByEmail() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    PersonEntity anotherPerson =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Another User",
+            "another@example.com",
+            "987654321",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(anotherPerson);
+
+    mockMvc
+        .perform(
+            get("/api/v1/persons")
+                .param("email", "test@example.com")
+                .param("page", "0")
+                .param("size", "20"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].email").value("test@example.com"));
+  }
+
+  @Test
+  void listPersonsShouldReturnOkWithoutFilter() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    PersonEntity anotherPerson =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Another User",
+            "another@example.com",
+            "987654321",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(anotherPerson);
+
+    mockMvc
+        .perform(get("/api/v1/persons").param("page", "0").param("size", "20"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(2))
+        .andExpect(jsonPath("$.content[0].email").value("test@example.com"))
+        .andExpect(jsonPath("$.content[1].email").value("another@example.com"));
+  }
+
+  @Test
+  void listPersonsShouldReturnBadRequestWenSizeTooBig() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/persons").param("size", "200"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+  }
+
+  @Test
+  void listPersonsShouldPaginate() throws Exception {
+    // Создаём 25 записей
+    for (int i = 0; i < 10; i++) {
+      personRepository.save(
+          new PersonEntity(
+              UUID.randomUUID(),
+              "Test User" + i,
+              "test" + i + "@example.ru",
+              "98765432" + i,
+              LocalDateTime.now(),
+              LocalDateTime.now()));
+    }
+
+    mockMvc
+        .perform(get("/api/v1/persons").param("page", "0").param("size", "6"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(6))
+        .andExpect(jsonPath("$.page").value(0))
+        .andExpect(jsonPath("$.totalPages").value(2))
+        .andExpect(jsonPath("$.totalElements").value(10));
+
+    mockMvc
+        .perform(get("/api/v1/persons").param("page", "1").param("size", "6"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(4))
+        .andExpect(jsonPath("$.page").value(1));
+  }
+
+  @Test
+  void listPersonsShouldUseDefaultProperties() throws Exception {
+
+    mockMvc
+        .perform(
+            get("/api/v1/persons")
+                .param("email", "test@example.com"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page").value(0))
+        .andExpect(jsonPath("$.size").value(20));
+  }
 }
