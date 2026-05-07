@@ -283,9 +283,7 @@ class PersonRestControllerIT {
   void listPersonsShouldUseDefaultProperties() throws Exception {
 
     mockMvc
-        .perform(
-            get("/api/v1/persons")
-                .param("email", "test@example.com"))
+        .perform(get("/api/v1/persons").param("email", "test@example.com"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(20));
