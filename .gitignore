@@ -5,9 +5,9 @@ build/
 !**/src/test/**/build/
 .kotlin
 
-# Данные PostgreSQL
-docker/postgres-data/
-docker/pgadmin-data/
+### Docker-compose для local запуска
+**/docker-compose.dev.yml
+
 
 ### IntelliJ IDEA ###
 .idea/
