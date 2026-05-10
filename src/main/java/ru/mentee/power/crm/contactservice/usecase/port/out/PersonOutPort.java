@@ -9,6 +9,10 @@ import ru.mentee.power.crm.contactservice.domain.model.Person;
 public interface PersonOutPort {
   Person save(Person person);
 
+  boolean delete(UUID id);
+
+  Optional<Person> update(Person updatePerson);
+
   Optional<Person> findByEmail(String email);
 
   Optional<Person> findById(UUID id);
@@ -16,4 +20,5 @@ public interface PersonOutPort {
   boolean existsByEmail(String email);
 
   Page<Person> findByEmailPageable(String email, Pageable pageable);
+  boolean existsById(UUID id);
 }

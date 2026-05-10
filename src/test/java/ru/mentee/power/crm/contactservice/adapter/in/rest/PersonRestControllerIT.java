@@ -1,8 +1,10 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest;
 
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -287,5 +289,26 @@ class PersonRestControllerIT {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(20));
+  void deletePersonShouldReturnNoContentWhenSuccess() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    mockMvc.perform(delete("/api/v1/persons/" + person.getId())).andExpect(status().isNoContent());
+  }
+
+  @Test
+  void deletePersonShouldReturnNotFoundWhenPersonNotExists() throws Exception {
+
+    mockMvc
+        .perform(delete("/api/v1/persons/" + UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
   }
 }
