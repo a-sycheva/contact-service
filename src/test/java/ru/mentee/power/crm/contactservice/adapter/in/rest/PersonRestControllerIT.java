@@ -254,7 +254,6 @@ class PersonRestControllerIT {
 
   @Test
   void listPersonsShouldPaginate() throws Exception {
-    // Создаём 25 записей
     for (int i = 0; i < 10; i++) {
       personRepository.save(
           new PersonEntity(
@@ -289,6 +288,9 @@ class PersonRestControllerIT {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.page").value(0))
         .andExpect(jsonPath("$.size").value(20));
+  }
+
+  @Test
   void deletePersonShouldReturnNoContentWhenSuccess() throws Exception {
     PersonEntity person =
         new PersonEntity(
@@ -310,5 +312,127 @@ class PersonRestControllerIT {
         .perform(delete("/api/v1/persons/" + UUID.randomUUID()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
+  }
+
+  @Test
+  void updatePersonShouldReturnOkWhenSuccess() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "test@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.fullName").value("Another User"))
+        .andExpect(jsonPath("$.email").value("test@example.com"))
+        .andExpect(jsonPath("$.phone").value(""));
+  }
+
+  @Test
+  void updatePersonShouldReturnNotFoundWhenPersonNotExists() throws Exception {
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "test@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
+  }
+
+  @Test
+  void updatePersonShouldReturnConflictWhenSetDuplicatedEmail() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    PersonEntity anotherPerson =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Another User",
+            "another@example.com",
+            "80987654321",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(anotherPerson);
+
+    String json =
+        """
+        {
+        "fullName": "Test User",
+        "email": "another@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_EMAIL_CONFLICT"));
+  }
+
+  @Test
+  void updatePersonShouldReturnBadRequestWhenDataNotValid() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "testexample.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
   }
 }

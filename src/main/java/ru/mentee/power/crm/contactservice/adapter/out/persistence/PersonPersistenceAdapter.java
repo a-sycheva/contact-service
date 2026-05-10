@@ -72,6 +72,9 @@ public class PersonPersistenceAdapter implements PersonOutPort {
     }
 
     return entityPage.map(mapper::toDomain);
+  }
+
+  @Override
   public boolean existsById(UUID id) {
     return repository.existsById(id);
   }

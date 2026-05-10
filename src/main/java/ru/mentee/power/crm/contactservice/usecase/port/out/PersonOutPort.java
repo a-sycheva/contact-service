@@ -20,5 +20,6 @@ public interface PersonOutPort {
   boolean existsByEmail(String email);
 
   Page<Person> findByEmailPageable(String email, Pageable pageable);
+
   boolean existsById(UUID id);
 }
