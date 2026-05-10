@@ -1,8 +1,10 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest;
 
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -175,6 +177,152 @@ class PersonRestControllerIT {
   void getPersonByIdShouldReturnNotFondWhenWhenPersonNotExists() throws Exception {
     mockMvc
         .perform(get("/api/v1/persons/" + UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
+  }
+
+  @Test
+  void updatePersonShouldReturnOkWhenSuccess() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "test@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.fullName").value("Another User"))
+        .andExpect(jsonPath("$.email").value("test@example.com"))
+        .andExpect(jsonPath("$.phone").value(""));
+  }
+
+  @Test
+  void updatePersonShouldReturnNotFoundWhenPersonNotExists() throws Exception {
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "test@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
+  }
+
+  @Test
+  void updatePersonShouldReturnConflictWhenSetDuplicatedEmail() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    PersonEntity anotherPerson =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Another User",
+            "another@example.com",
+            "80987654321",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(anotherPerson);
+
+    String json =
+        """
+        {
+        "fullName": "Test User",
+        "email": "another@example.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_EMAIL_CONFLICT"));
+  }
+
+  @Test
+  void updatePersonShouldReturnBadRequestWhenDataNotValid() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    String json =
+        """
+        {
+        "fullName": "Another User",
+        "email": "testexample.com",
+        "phone" : ""
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/persons/" + person.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+  }
+
+  @Test
+  void deletePersonShouldReturnNoContentWhenSuccess() throws Exception {
+    PersonEntity person =
+        new PersonEntity(
+            UUID.randomUUID(),
+            "Test User",
+            "test@example.com",
+            "123456789",
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    personRepository.save(person);
+
+    mockMvc.perform(delete("/api/v1/persons/" + person.getId())).andExpect(status().isNoContent());
+  }
+
+  @Test
+  void deletePersonShouldReturnNotFoundWhenPersonNotExists() throws Exception {
+
+    mockMvc
+        .perform(delete("/api/v1/persons/" + UUID.randomUUID()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
   }

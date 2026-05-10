@@ -40,7 +40,7 @@ paths:
 
   /api/v1/persons/{id}:
     get:
-      tags: [ persons ]
+      tags: [persons]
       operationId: getPersonById
       summary: Получить физическое лицо по ID
       parameters:
@@ -52,10 +52,48 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PersonResponse' }
         '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [persons]
+      operationId: updatePerson
+      summary: Обновить физическое лицо
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePersonRequest' }
+      responses:
+        '200':
+          description: Обновлен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/EmailConflict' }
+    delete:
+      tags: [persons]
+      operationId: deletePerson
+      summary: Удалить физическое лицо (каскад person_company_links)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204':
+          description: Удалён
+        '404': { $ref: '#/components/responses/NotFound' }
 
 components:
   schemas:
     CreatePersonRequest:
+      type: object
+      required: [fullName, email]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        phone: { type: string, maxLength: 50, nullable: true }
+
+    UpdatePersonRequest:
       type: object
       required: [fullName, email]
       properties:
@@ -73,7 +111,6 @@ components:
         phone: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
-
 
     Problem:
       type: object
