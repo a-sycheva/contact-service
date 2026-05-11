@@ -2,6 +2,8 @@ package ru.mentee.power.crm.contactservice.usecase.port.out;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import ru.mentee.power.crm.contactservice.domain.model.Person;
 
 public interface PersonOutPort {
@@ -16,6 +18,8 @@ public interface PersonOutPort {
   Optional<Person> findById(UUID id);
 
   boolean existsByEmail(String email);
+
+  Page<Person> findByEmailPageable(String email, Pageable pageable);
 
   boolean existsById(UUID id);
 }

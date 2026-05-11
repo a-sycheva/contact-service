@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.Problem;
 import ru.mentee.power.crm.contactservice.domain.exception.BusinessRuleViolationException;
 import ru.mentee.power.crm.contactservice.domain.exception.EntityNotFoundException;
+import ru.mentee.power.crm.contactservice.domain.exception.ValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -56,6 +57,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     LOG.warn("Entity not found: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+  }
+
+  @ExceptionHandler(ValidationException.class)
+  public ResponseEntity<Problem> handleValidation(
+      ValidationException ex, HttpServletRequest request) {
+
+    Problem problem =
+        createProblem(
+            URI.create("/problems/validation"),
+            "Validation Error",
+            400,
+            ex.getMessage(),
+            request.getRequestURI(),
+            "VALIDATION_ERROR");
+
+    LOG.error("Validation Error: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
   }
 
   @Override

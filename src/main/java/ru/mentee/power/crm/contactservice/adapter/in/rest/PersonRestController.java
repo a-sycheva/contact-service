@@ -1,12 +1,18 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import ru.mentee.power.crm.contactservice.adapter.in.rest.api.PersonsApi;
 import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.CreatePersonRequest;
+import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.ListPersons200Response;
 import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.PersonResponse;
 import ru.mentee.power.crm.contactservice.adapter.in.rest.dto.UpdatePersonRequest;
 import ru.mentee.power.crm.contactservice.adapter.in.rest.mapper.PersonRestMapper;
@@ -52,5 +58,36 @@ public class PersonRestController implements PersonsApi {
   public ResponseEntity<PersonResponse> getPersonById(UUID id) {
     Person person = getPersonUseCase.getById(id);
     return ResponseEntity.ok(mapper.toResponse(person));
+  }
+
+  @Override
+  public ResponseEntity<ListPersons200Response> listPersons(
+      String email, Integer page, Integer size) {
+    int pageNum = 0;
+    if (page != null) {
+      pageNum = page;
+    }
+
+    int pageSize = 20;
+    if (size != null) {
+      pageSize = size;
+    }
+
+    Pageable pageable = PageRequest.of(pageNum, pageSize);
+
+    Page<Person> personPage = getPersonUseCase.findByEmailPageable(email, pageable);
+
+    ListPersons200Response response = new ListPersons200Response();
+    response.setPage(personPage.getNumber());
+    response.setSize(personPage.getSize());
+    response.setTotalElements(personPage.getTotalElements());
+    response.setTotalPages(personPage.getTotalPages());
+
+    List<PersonResponse> content =
+        personPage.getContent().stream().map(mapper::toResponse).collect(Collectors.toList());
+
+    response.setContent(content);
+
+    return ResponseEntity.ok(response);
   }
 }
