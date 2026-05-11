@@ -1,5 +1,6 @@
 package ru.mentee.power.crm.contactservice.domain.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -13,17 +14,12 @@ public class Person {
   private String fullName;
   private String email;
   private String phone;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
 
   public Person() {
     this.id = UUID.randomUUID();
-  }
-
-  public static Person create(String fullName, String email, String phone) {
-    Person person = new Person();
-    person.id = UUID.randomUUID();
-    person.fullName = fullName;
-    person.email = email;
-    person.phone = phone;
-    return person;
+    this.createdAt = LocalDateTime.now();
+    this.updatedAt = LocalDateTime.now();
   }
 }
