@@ -20,12 +20,11 @@ public class UpdatePersonService implements UpdatePersonUseCase {
     Person existingPerson =
         personOutPort
             .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Person with id " + id + " not found"));
+            .orElseThrow(() -> EntityNotFoundException.forPerson(id));
 
     if (!existingPerson.getEmail().equals(person.getEmail())) {
       if (personOutPort.existsByEmail(person.getEmail())) {
-        throw new BusinessRuleViolationException(
-            "Person with email " + person.getEmail() + " already exists");
+        throw BusinessRuleViolationException.emailConflict(person.getEmail());
       }
     }
 
@@ -35,6 +34,6 @@ public class UpdatePersonService implements UpdatePersonUseCase {
 
     return personOutPort
         .update(existingPerson)
-        .orElseThrow(() -> new EntityNotFoundException("Person with id " + id + " not found"));
+        .orElseThrow(() -> EntityNotFoundException.forPerson(id));
   }
 }

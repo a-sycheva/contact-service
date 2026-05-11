@@ -15,7 +15,7 @@ public class DeletePersonService implements DeletePersonUseCase {
   @Override
   public void deletePerson(UUID id) {
     if (!personOutPort.delete(id)) {
-      throw new EntityNotFoundException("Person with id " + id + " not found");
+      throw EntityNotFoundException.forPerson(id);
     }
   }
 }

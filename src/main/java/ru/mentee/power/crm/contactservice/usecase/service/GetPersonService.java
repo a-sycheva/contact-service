@@ -19,17 +19,10 @@ public class GetPersonService implements GetPersonUseCase {
   private final PersonOutPort personOutPort;
 
   @Override
-  @Transactional(readOnly = true)
   public Person getById(UUID id) {
     return personOutPort
         .findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Person with id " + id + " not found"));
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Optional<Person> findByEmail(String email) {
-    return personOutPort.findByEmail(email);
+        .orElseThrow(() -> EntityNotFoundException.forPerson(id));
   }
 
   @Override
