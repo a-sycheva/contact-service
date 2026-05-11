@@ -12,14 +12,12 @@ public class BusinessRuleViolationException extends RuntimeException {
   }
 
   public static BusinessRuleViolationException emailConflict(String email) {
-    return new BusinessRuleViolationException("Person with email "
-        + email + " already exists", "DUPLICATE_EMAIL");
+    return new BusinessRuleViolationException(
+        "Person with email " + email + " already exists", "PERSON_EMAIL_CONFLICT");
   }
 
   public static BusinessRuleViolationException innConflict(String inn) {
-    return new BusinessRuleViolationException("Company with inn "
-        + inn + " already exists", "`COMPANY_INN_CONFLICT`");
+    return new BusinessRuleViolationException(
+        "Company with inn " + inn + " already exists", "COMPANY_INN_CONFLICT");
   }
-
-
 }

@@ -1,12 +1,10 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest.error;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
-
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,7 +36,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             409,
             ex.getMessage(),
             request.getRequestURI(),
-            "PERSON_EMAIL_CONFLICT");
+            ex.getErrorCode());
 
     log.warn("Business rule violation: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
@@ -79,29 +77,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<Problem> handleConstraintViolation (
+  public ResponseEntity<Problem> handleConstraintViolation(
       ConstraintViolationException ex, HttpServletRequest request) {
 
     log.warn("Constraint violation: {}", ex.getMessage());
 
-    String detail = ex.getConstraintViolations().stream()
-        .map(violation -> {
-          String path = violation.getPropertyPath().toString();
-          String field = path.contains(".")
-              ? path.substring(path.lastIndexOf('.') + 1)
-              : path;
-          return field + ": " + violation.getMessage();
-        })
-        .collect(Collectors.joining(", "));
+    String detail =
+        ex.getConstraintViolations().stream()
+            .map(
+                violation -> {
+                  String path = violation.getPropertyPath().toString();
+                  String field =
+                      path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+                  return field + ": " + violation.getMessage();
+                })
+            .collect(Collectors.joining(", "));
 
-    Problem problem = createProblem(
-        URI.create("/problems/validation"),
-        "Validation Error",
-        400,
-        detail,
-        request.getRequestURI(),
-        "VALIDATION_ERROR"
-    );
+    Problem problem =
+        createProblem(
+            URI.create("/problems/validation"),
+            "Validation Error",
+            400,
+            detail,
+            request.getRequestURI(),
+            "VALIDATION_ERROR");
 
     return ResponseEntity.badRequest().body(problem);
   }
@@ -132,20 +131,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<Problem> handleGenericException(
-      Exception ex,
-      HttpServletRequest request) {
+  public ResponseEntity<Problem> handleGenericException(Exception ex, HttpServletRequest request) {
 
     log.error("Unexpected error: {}", ex.getMessage(), ex);
 
-    Problem problem = createProblem(
-        URI.create("/problems/internal-error"),
-        "Internal Server Error",
-        500,
-        "An unexpected error occurred",
-        request.getRequestURI(),
-        "INTERNAL_ERROR"
-    );
+    Problem problem =
+        createProblem(
+            URI.create("/problems/internal-error"),
+            "Internal Server Error",
+            500,
+            "An unexpected error occurred",
+            request.getRequestURI(),
+            "INTERNAL_ERROR");
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
   }
 
