@@ -47,7 +47,7 @@ class PersonRestControllerIT {
 
   @Autowired private MockMvc mockMvc;
 
-  @Autowired private PersonJpaRepository personRepository; // для очистки БД между тестами
+  @Autowired private PersonJpaRepository personRepository;
 
   @BeforeEach
   void cleanUp() {
@@ -97,14 +97,9 @@ class PersonRestControllerIT {
 
   @Test
   void createPersonShouldReturnConflictWhenEmailAlreadyExists() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Another User",
-            "test@example.com",
-            "80976543210",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+
+    PersonEntity person = createPersonEntity("Another User", "test@example.com", "80976543210");
+
     personRepository.save(person);
 
     String json =
@@ -154,14 +149,8 @@ class PersonRestControllerIT {
 
   @Test
   void getPersonByIdShouldReturnOkWhenPersonExists() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
+
     personRepository.save(person);
 
     mockMvc
@@ -183,24 +172,11 @@ class PersonRestControllerIT {
 
   @Test
   void listPersonsShouldReturnOkWhenFilteredByEmail() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     PersonEntity anotherPerson =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Another User",
-            "another@example.com",
-            "987654321",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+        createPersonEntity("Another User", "another@example.com", "987654321");
     personRepository.save(anotherPerson);
 
     mockMvc
@@ -216,24 +192,11 @@ class PersonRestControllerIT {
 
   @Test
   void listPersonsShouldReturnOkWithoutFilter() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     PersonEntity anotherPerson =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Another User",
-            "another@example.com",
-            "987654321",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+        createPersonEntity("Another User", "another@example.com", "987654321");
     personRepository.save(anotherPerson);
 
     mockMvc
@@ -292,14 +255,7 @@ class PersonRestControllerIT {
 
   @Test
   void deletePersonShouldReturnNoContentWhenSuccess() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     mockMvc.perform(delete("/api/v1/persons/" + person.getId())).andExpect(status().isNoContent());
@@ -316,14 +272,7 @@ class PersonRestControllerIT {
 
   @Test
   void updatePersonShouldReturnOkWhenSuccess() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     String json =
@@ -368,24 +317,11 @@ class PersonRestControllerIT {
 
   @Test
   void updatePersonShouldReturnConflictWhenSetDuplicatedEmail() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     PersonEntity anotherPerson =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Another User",
-            "another@example.com",
-            "80987654321",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+        createPersonEntity("Another User", "another@example.com", "80987654321");
     personRepository.save(anotherPerson);
 
     String json =
@@ -408,14 +344,7 @@ class PersonRestControllerIT {
 
   @Test
   void updatePersonShouldReturnBadRequestWhenDataNotValid() throws Exception {
-    PersonEntity person =
-        new PersonEntity(
-            UUID.randomUUID(),
-            "Test User",
-            "test@example.com",
-            "123456789",
-            LocalDateTime.now(),
-            LocalDateTime.now());
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
     personRepository.save(person);
 
     String json =
@@ -434,5 +363,10 @@ class PersonRestControllerIT {
                 .content(json))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+  }
+
+  PersonEntity createPersonEntity(String fullname, String email, String phone) {
+    return new PersonEntity(
+        UUID.randomUUID(), fullname, email, phone, LocalDateTime.now(), LocalDateTime.now());
   }
 }

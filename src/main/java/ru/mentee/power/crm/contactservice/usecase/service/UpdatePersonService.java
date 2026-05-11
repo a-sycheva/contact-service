@@ -18,9 +18,7 @@ public class UpdatePersonService implements UpdatePersonUseCase {
   public Person updatePerson(UUID id, Person person) {
 
     Person existingPerson =
-        personOutPort
-            .findById(id)
-            .orElseThrow(() -> EntityNotFoundException.forPerson(id));
+        personOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forPerson(id));
 
     if (!existingPerson.getEmail().equals(person.getEmail())) {
       if (personOutPort.existsByEmail(person.getEmail())) {
