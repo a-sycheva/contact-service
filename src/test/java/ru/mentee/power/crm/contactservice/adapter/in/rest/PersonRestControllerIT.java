@@ -225,7 +225,8 @@ class PersonRestControllerIT {
               "test" + i + "@example.ru",
               "98765432" + i,
               LocalDateTime.now(),
-              LocalDateTime.now()));
+              LocalDateTime.now(),
+              null));
     }
 
     mockMvc
@@ -367,6 +368,6 @@ class PersonRestControllerIT {
 
   PersonEntity createPersonEntity(String fullname, String email, String phone) {
     return new PersonEntity(
-        UUID.randomUUID(), fullname, email, phone, LocalDateTime.now(), LocalDateTime.now());
+        UUID.randomUUID(), fullname, email, phone, LocalDateTime.now(), LocalDateTime.now(), null);
   }
 }

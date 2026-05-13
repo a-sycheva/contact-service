@@ -16,7 +16,6 @@ public class UpdatePersonService implements UpdatePersonUseCase {
 
   @Override
   public Person updatePerson(UUID id, Person person) {
-
     Person existingPerson =
         personOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forPerson(id));
 
@@ -30,8 +29,6 @@ public class UpdatePersonService implements UpdatePersonUseCase {
     existingPerson.setEmail(person.getEmail());
     existingPerson.setPhone(person.getPhone());
 
-    return personOutPort
-        .update(existingPerson)
-        .orElseThrow(() -> EntityNotFoundException.forPerson(id));
+    return personOutPort.update(existingPerson).get();
   }
 }
