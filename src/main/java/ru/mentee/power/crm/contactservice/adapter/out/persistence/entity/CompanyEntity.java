@@ -3,13 +3,18 @@ package ru.mentee.power.crm.contactservice.adapter.out.persistence.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Setter
 @Getter
@@ -27,8 +32,13 @@ public class CompanyEntity {
   private String inn;
 
   @Column(name = "created_at", nullable = false)
+  @CreationTimestamp
   private LocalDateTime createdAt;
 
   @Column(name = "updated_at", nullable = false)
+  @UpdateTimestamp
   private LocalDateTime updatedAt;
+
+  @OneToMany(mappedBy = "company")
+  private Set<PersonCompanyLinkEntity> personLinks = new HashSet<>();
 }
