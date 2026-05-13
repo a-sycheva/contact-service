@@ -9,9 +9,15 @@ import ru.mentee.power.crm.contactservice.domain.model.Company;
 public interface CompanyOutPort {
   Company save(Company company);
 
+  void delete(UUID id);
+
   boolean existsByInn(String inn);
+
+  boolean existsById(UUID id);
 
   Optional<Company> findById(UUID id);
 
   Page<Company> findByNamePageAble(String name, Pageable pageable);
+
+  Company update(Company company);
 }

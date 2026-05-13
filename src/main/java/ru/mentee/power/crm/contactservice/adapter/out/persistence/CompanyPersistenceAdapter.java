@@ -25,8 +25,18 @@ public class CompanyPersistenceAdapter implements CompanyOutPort {
   }
 
   @Override
+  public void delete(UUID id) {
+    repository.deleteById(id);
+  }
+
+  @Override
   public boolean existsByInn(String inn) {
     return repository.existsByInn(inn);
+  }
+
+  @Override
+  public boolean existsById(UUID id) {
+    return repository.existsById(id);
   }
 
   @Override
@@ -45,5 +55,15 @@ public class CompanyPersistenceAdapter implements CompanyOutPort {
     }
 
     return entityPage.map(mapper::toDomain);
+  }
+
+  @Override
+  public Company update(Company company) {
+    CompanyEntity existingEntity = repository.findById(company.getId()).get();
+    existingEntity.setUpdatedAt(company.getUpdatedAt());
+    existingEntity.setName(company.getName());
+    existingEntity.setInn(company.getInn());
+
+    return mapper.toDomain(repository.save(existingEntity));
   }
 }

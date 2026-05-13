@@ -1,12 +1,17 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,11 +23,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.mentee.power.crm.contactservice.adapter.out.persistence.entity.CompanyEntity;
+import ru.mentee.power.crm.contactservice.adapter.out.persistence.entity.PersonEntity;
 import ru.mentee.power.crm.contactservice.adapter.out.persistence.repository.CompanyJpaRepository;
+import ru.mentee.power.crm.contactservice.adapter.out.persistence.repository.LinkJpaRepository;
+import ru.mentee.power.crm.contactservice.adapter.out.persistence.repository.PersonJpaRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -47,22 +56,31 @@ public class CompanyRestControllerIT {
 
   @Autowired private CompanyJpaRepository companyRepository;
 
+  @Autowired private PersonJpaRepository personRepository;
+
+  @Autowired private LinkJpaRepository linkRepository;
+
   @BeforeEach
   void cleanUp() {
+    linkRepository.deleteAll();
     companyRepository.deleteAll();
+    personRepository.deleteAll();
   }
 
   @Test
   void createCompanyShouldReturnCreatedWhenDataIsValid() throws Exception {
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
+    personRepository.save(person);
 
-    UUID id = UUID.randomUUID();
+    UUID id = person.getId();
     String json =
         """
         {
           "name": "Test Corp",
           "inn": "000000000000",
           "personId": "%s",
-          "role": "Test Role"
+          "role": "EMPLOYEE",
+          "title": "IT-engineer"
         }
         """
             .formatted(id);
@@ -73,22 +91,31 @@ public class CompanyRestControllerIT {
         .andExpect(header().string("location", matchesPattern("/api/v1/companies/.+")))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.name").value("Test Corp"))
-        .andExpect(jsonPath("$.persons").isEmpty());
+        .andExpect(jsonPath("$.persons").exists())
+        .andExpect(jsonPath("$.persons[0].id").value(id.toString()))
+        .andExpect(jsonPath("$.persons[0].fullName").value(person.getFullName()))
+        .andExpect(jsonPath("$.persons[0].email").value(person.getEmail()))
+        .andExpect(jsonPath("$.persons[0].phone").value(person.getPhone()))
+        .andExpect(jsonPath("$.persons[0].role").value("EMPLOYEE"))
+        .andExpect(jsonPath("$.persons[0].title").value("IT-engineer"));
   }
 
   @Test
   void createCompanyShouldReturnConflictWhenDuplicateInn() throws Exception {
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
+    personRepository.save(person);
+
     CompanyEntity company = createCompanyEntity("Test Corp", "000000000000");
     companyRepository.save(company);
 
-    UUID id = UUID.randomUUID();
+    UUID id = person.getId();
     String json =
         """
         {
           "name": "Another Test Corp",
           "inn": "000000000000",
           "personId": "%s",
-          "role": "Test Role"
+          "role": "EMPLOYEE"
         }
         """
             .formatted(id);
@@ -108,7 +135,7 @@ public class CompanyRestControllerIT {
           "name": "Another Test Corp",
           "inn": "000",
           "personId": "%s",
-          "role": "Test Role"
+          "role": "EMPLOYEE"
         }
         """
             .formatted(id);
@@ -119,9 +146,30 @@ public class CompanyRestControllerIT {
         .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
   }
 
+  @Test
+  void createCompanyShouldReturnNotFoundWhenPersonNotExists() throws Exception {
+    UUID id = UUID.randomUUID();
+    String json =
+        """
+        {
+          "name": "Test Corp",
+          "inn": "000000000000",
+          "personId": "%s",
+          "role": "EMPLOYEE",
+          "title": "IT-engineer"
+        }
+        """
+            .formatted(id);
+
+    mockMvc
+        .perform(post("/api/v1/companies").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("PERSON_NOT_FOUND"));
+  }
+
   CompanyEntity createCompanyEntity(String name, String inn) {
     return new CompanyEntity(
-        UUID.randomUUID(), name, inn, LocalDateTime.now(), LocalDateTime.now());
+        UUID.randomUUID(), name, inn, LocalDateTime.now(), LocalDateTime.now(), null);
   }
 
   @Test
@@ -182,11 +230,163 @@ public class CompanyRestControllerIT {
   }
 
   @Test
-  void getCompanyByIdShouldReturnNotfoundWhenCompanyNotExists() throws Exception {
+  void getCompanyByIdShouldReturnNotFoundWhenCompanyNotExists() throws Exception {
 
     mockMvc
         .perform(get("/api/v1/companies/" + UUID.randomUUID()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.errorCode").value("COMPANY_NOT_FOUND"));
+  }
+
+  PersonEntity createPersonEntity(String fullname, String email, String phone) {
+    return new PersonEntity(
+        UUID.randomUUID(), fullname, email, phone, LocalDateTime.now(), LocalDateTime.now(), null);
+  }
+
+  @Test
+  void deleteCompanyShouldReturnNoContentWhenSuccess() throws Exception {
+    CompanyEntity company = createCompanyEntity("Test Corp", "000000000000");
+    companyRepository.save(company);
+
+    mockMvc
+        .perform(delete("/api/v1/companies/" + company.getId()))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void deleteCompanyShouldReturnNotFoundWhenCompanyNotExists() throws Exception {
+    mockMvc
+        .perform(delete("/api/v1/companies/" + UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("COMPANY_NOT_FOUND"));
+  }
+
+  @Test
+  void deleteCompanyShouldReturnConflictWhenCompanyHasLinks() throws Exception {
+    PersonEntity person = createPersonEntity("Test User", "test@example.com", "123456789");
+    personRepository.save(person);
+
+    UUID id = person.getId();
+    String json =
+        """
+        {
+          "name": "Test Corp",
+          "inn": "000000000000",
+          "personId": "%s",
+          "role": "EMPLOYEE",
+          "title": "IT-engineer"
+        }
+        """
+            .formatted(id);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/v1/companies").contentType(MediaType.APPLICATION_JSON).content(json))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+    String responseJson = result.getResponse().getContentAsString();
+    String createdCompanyId = JsonPath.parse(responseJson).read("$.id");
+
+    mockMvc
+        .perform(delete("/api/v1/companies/" + createdCompanyId))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.errorCode").value("COMPANY_HAS_LINKS"));
+  }
+
+  @Test
+  void updateCompanyShouldReturnOkWhenSuccess() throws Exception {
+    CompanyEntity company = createCompanyEntity("TestCorp", "000000000000");
+    companyRepository.save(company);
+
+    String json =
+        """
+        {
+          "name": "AnotherTestCorp",
+          "inn": "000000000000"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/companies/" + company.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+                .param("id", company.getId().toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("AnotherTestCorp"))
+        .andExpect(jsonPath("$.updatedAt").value(not(equalTo(company.getUpdatedAt()))));
+  }
+
+  @Test
+  void updateCompanyShouldReturnNotFoundWhenCompanyNotExists() throws Exception {
+    UUID id = UUID.randomUUID();
+
+    String json =
+        """
+        {
+          "name": "AnotherTestCorp",
+          "inn": "000000000000"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/companies/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+                .param("id", id.toString()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.errorCode").value("COMPANY_NOT_FOUND"));
+  }
+
+  @Test
+  void updateCompanyShouldReturnConflictWhenChangeInnToExisted() throws Exception {
+    CompanyEntity company = createCompanyEntity("TestCorp", "000000000000");
+    companyRepository.save(company);
+
+    CompanyEntity anotherCompany = createCompanyEntity("TestIT", "111111111111");
+    companyRepository.save(anotherCompany);
+
+    String json =
+        """
+        {
+          "name": "TestCorp",
+          "inn": "111111111111"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/companies/" + company.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+                .param("id", company.getId().toString()))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.errorCode").value("COMPANY_INN_CONFLICT"));
+  }
+
+  @Test
+  void updateCompanyShouldReturnBadRequestWhenDataIsInvalid() throws Exception {
+    CompanyEntity company = createCompanyEntity("TestCorp", "000000000000");
+    companyRepository.save(company);
+
+    String json =
+        """
+        {
+          "name": "AnotherTestCorp",
+          "inn": "0000"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            put("/api/v1/companies/" + company.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+                .param("id", company.getId().toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
   }
 }
