@@ -21,17 +21,17 @@ import ru.mentee.power.crm.contactservice.usecase.port.in.GetCompanyUseCase;
 @RestController
 @RequiredArgsConstructor
 public class CompanyRestController implements CompaniesApi {
-  public final CreateCompanyUseCase createCompanyUseCase;
-  public final GetCompanyUseCase getCompanyUseCase;
-  public final CompanyRestMapper mapper;
+  private final CreateCompanyUseCase createCompanyUseCase;
+  private final GetCompanyUseCase getCompanyUseCase;
+  private final CompanyRestMapper mapper;
 
   @Override
   public ResponseEntity<CompanyResponse> createCompany(CreateCompanyRequest request) {
     Company company = mapper.toDomain(request);
-    Company cretedCompany =
+    Company createdCompany =
         createCompanyUseCase.create(company, request.getPersonId(), request.getRole());
-    CompanyResponse response = mapper.toResponse(cretedCompany);
-    URI uri = URI.create("/api/v1/companies/" + cretedCompany.getId());
+    CompanyResponse response = mapper.toResponse(createdCompany);
+    URI uri = URI.create("/api/v1/companies/" + createdCompany.getId());
     return ResponseEntity.created(uri).body(response);
   }
 
