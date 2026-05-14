@@ -27,29 +27,29 @@ import ru.mentee.power.crm.contactservice.usecase.port.in.UpdateCompanyUseCase;
 @RestController
 @RequiredArgsConstructor
 public class CompanyRestController implements CompaniesApi {
-  public final CreateCompanyUseCase createCompanyUseCase;
-  public final GetCompanyUseCase getCompanyUseCase;
-  public final DeleteCompanyUseCase deleteCompanyUseCase;
-  public final UpdateCompanyUseCase updateCompanyUseCase;
-  public final PersonCompanyLinkUseCase personCompanyLinkUseCase;
-  public final CompanyRestMapper mapper;
-  public final PersonWithRoleMapper personWithRoleMapper;
+  private final CreateCompanyUseCase createCompanyUseCase;
+  private final GetCompanyUseCase getCompanyUseCase;
+  private final DeleteCompanyUseCase deleteCompanyUseCase;
+  private final UpdateCompanyUseCase updateCompanyUseCase;
+  private final PersonCompanyLinkUseCase personCompanyLinkUseCase;
+  private final CompanyRestMapper mapper;
+  private final PersonWithRoleMapper personWithRoleMapper;
 
   @Override
   public ResponseEntity<CompanyResponse> createCompany(CreateCompanyRequest request) {
     Company company = mapper.toDomain(request);
-    Company cretedCompany =
+    Company createdCompany =
         createCompanyUseCase.create(
             company, request.getPersonId(), request.getRole().toString(), request.getTitle());
 
-    CompanyResponse response = mapper.toResponse(cretedCompany);
+    CompanyResponse response = mapper.toResponse(createdCompany);
     List<PersonWithRole> personList =
-        personCompanyLinkUseCase.getPersonsWithRolesByCompanyId(cretedCompany.getId()).stream()
+        personCompanyLinkUseCase.getPersonsWithRolesByCompanyId(createdCompany.getId()).stream()
             .map(personWithRoleMapper::toDataTransferObject)
             .collect(Collectors.toList());
     response.setPersons(personList);
 
-    URI uri = URI.create("/api/v1/companies/" + cretedCompany.getId());
+    URI uri = URI.create("/api/v1/companies/" + createdCompany.getId());
     return ResponseEntity.created(uri).body(response);
   }
 
