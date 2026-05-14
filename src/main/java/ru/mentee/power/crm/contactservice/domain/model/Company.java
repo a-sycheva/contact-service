@@ -9,17 +9,16 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode
-public class Person {
+public class Company {
   private UUID id;
-  private String fullName;
-  private String email;
-  private String phone;
+  private String name;
+  private String inn;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
-  public Person() {
-    this.id = UUID.randomUUID();
+  public Company() {
     this.createdAt = LocalDateTime.now();
     this.updatedAt = LocalDateTime.now();
+    this.id = UUID.randomUUID();
   }
 }

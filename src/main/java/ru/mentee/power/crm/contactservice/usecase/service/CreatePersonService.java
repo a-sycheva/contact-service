@@ -17,8 +17,7 @@ public class CreatePersonService implements CreatePersonUseCase {
   @Transactional
   public Person create(Person person) {
     if (personOutPort.existsByEmail(person.getEmail())) {
-      throw new BusinessRuleViolationException(
-          "Person with email " + person.getEmail() + " already exists");
+      throw BusinessRuleViolationException.emailConflict(person.getEmail());
     }
 
     return personOutPort.save(person);

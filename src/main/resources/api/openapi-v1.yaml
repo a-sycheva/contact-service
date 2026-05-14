@@ -42,9 +42,9 @@ paths:
       operationId: listPersons
       summary: Пагинированный список физических лиц (с поиском по email)
       parameters:
-        - { name: email, in: query, schema: { type: string, format: email }, description: Частичное совпадение LIKE %email% }
+        - { name: email, in: query, schema: { type: string, maxLength: 255  }, description: Частичное совпадение LIKE %email% }
         - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
-        - { name: size, in: query, schema: { type: integer, minimum: 1, default: 20 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
       responses:
         '200':
           description: Страница Person
@@ -107,6 +107,67 @@ paths:
           description: Удалён
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/v1/companies:
+    post:
+      tags: [companies]
+      operationId: createCompany
+      summary: Создать организацию с привязкой к Person
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyRequest'
+      responses:
+        '201':
+          description: Создана
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+              description: /api/v1/companies/{id}
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompanyResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/InnConflict' }
+    get:
+      tags: [companies]
+      operationId: listCompanies
+      summary: Пагинированный список организаций
+      parameters:
+        - { name: name, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Страница Company
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PageResponse'
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/CompanyResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/v1/companies/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [companies]
+      operationId: getCompanyById
+      summary: Получить организацию по ID (включая вложенных Persons)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompanyResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
 components:
   schemas:
     CreatePersonRequest:
@@ -136,11 +197,41 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
+    CreateCompanyRequest:
+      type: object
+      required: [name, inn, personId]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        inn: { type: string, minLength: 10, maxLength: 12, pattern: '^\d+$' }
+        personId: { type: string, format: uuid }
+        role: { type: string, maxLength: 100, nullable: true }
+
+    PersonWithRole:
+      type: object
+      required: [id, fullName, email]
+      properties:
+        id: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        role: { type: string, nullable: true }
+
+    CompanyResponse:
+      type: object
+      required: [ id, name, persons, createdAt ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 255 }
+        persons:
+          type: array
+          items: { $ref: '#/components/schemas/PersonWithRole' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time, nullable: true }
+
     PageResponse:
       type: object
       required: [ content, page, size, totalElements, totalPages ]
       properties:
-        content: { type: array, items: { } }
         page: { type: integer }
         size: { type: integer }
         totalElements: { type: integer, format: int64 }
@@ -184,12 +275,12 @@ components:
 
   responses:
     BadRequest:
-      description: Validation failed
+      description: Validation failed (errorCode=VALIDATION_ERROR)
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
     NotFound:
-      description: Ресурс не найден
+      description: Ресурс не найден (пример errorCode=PERSON_NOT_FOUND)
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
@@ -198,3 +289,8 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+    InnConflict:
+      description: ИНН уже существует (errorCode=COMPANY_INN_CONFLICT)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem'}

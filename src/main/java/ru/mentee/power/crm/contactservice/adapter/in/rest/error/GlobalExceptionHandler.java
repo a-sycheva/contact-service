@@ -1,11 +1,11 @@
 package ru.mentee.power.crm.contactservice.adapter.in.rest.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -21,9 +21,9 @@ import ru.mentee.power.crm.contactservice.domain.exception.BusinessRuleViolation
 import ru.mentee.power.crm.contactservice.domain.exception.EntityNotFoundException;
 import ru.mentee.power.crm.contactservice.domain.exception.ValidationException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(BusinessRuleViolationException.class)
   public ResponseEntity<Problem> handleBusinessRuleViolation(
@@ -36,9 +36,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             409,
             ex.getMessage(),
             request.getRequestURI(),
-            "PERSON_EMAIL_CONFLICT");
+            ex.getErrorCode());
 
-    LOG.warn("Business rule violation: {}", ex.getMessage());
+    log.warn("Business rule violation: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
   }
 
@@ -53,9 +53,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             404,
             ex.getMessage(),
             request.getRequestURI(),
-            "PERSON_NOT_FOUND");
+            ex.getErrorCode());
 
-    LOG.warn("Entity not found: {}", ex.getMessage());
+    log.warn("Entity not found: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
   }
 
@@ -72,8 +72,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             request.getRequestURI(),
             "VALIDATION_ERROR");
 
-    LOG.error("Validation Error: {}", ex.getMessage());
+    log.warn("Validation Error: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<Problem> handleConstraintViolation(
+      ConstraintViolationException ex, HttpServletRequest request) {
+
+    log.warn("Constraint violation: {}", ex.getMessage());
+
+    String detail =
+        ex.getConstraintViolations().stream()
+            .map(
+                violation -> {
+                  String path = violation.getPropertyPath().toString();
+                  String field =
+                      path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+                  return field + ": " + violation.getMessage();
+                })
+            .collect(Collectors.joining(", "));
+
+    Problem problem =
+        createProblem(
+            URI.create("/problems/validation"),
+            "Validation Error",
+            400,
+            detail,
+            request.getRequestURI(),
+            "VALIDATION_ERROR");
+
+    return ResponseEntity.badRequest().body(problem);
   }
 
   @Override
@@ -97,8 +126,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             ((ServletRequestAttributes) request).getRequest().getRequestURI(),
             "VALIDATION_ERROR");
 
-    LOG.error("Validation Error: {}", ex.getMessage());
+    log.error("Validation Error: {}", ex.getMessage());
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Problem> handleGenericException(Exception ex, HttpServletRequest request) {
+
+    log.error("Unexpected error: {}", ex.getMessage(), ex);
+
+    Problem problem =
+        createProblem(
+            URI.create("/problems/internal-error"),
+            "Internal Server Error",
+            500,
+            "An unexpected error occurred",
+            request.getRequestURI(),
+            "INTERNAL_ERROR");
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
   }
 
   private Problem createProblem(
