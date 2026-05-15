@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.mentee.power.crm.contactservice.domain.exception.BusinessRuleViolationException;
 import ru.mentee.power.crm.contactservice.domain.exception.EntityNotFoundException;
 import ru.mentee.power.crm.contactservice.domain.model.Company;
@@ -16,6 +17,7 @@ public class UpdateCompanyService implements UpdateCompanyUseCase {
   private final CompanyOutPort companyOutPort;
 
   @Override
+  @Transactional
   public Company updateCompany(UUID id, Company company) {
     Company existingCompany =
         companyOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forCompany(id));
