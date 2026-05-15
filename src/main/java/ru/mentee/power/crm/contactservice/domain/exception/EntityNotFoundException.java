@@ -13,10 +13,16 @@ public class EntityNotFoundException extends RuntimeException {
   }
 
   public static EntityNotFoundException forPerson(UUID id) {
-    return new EntityNotFoundException("Person with id " + id + " not found", "PERSON_NOT_FOUND");
+    return new EntityNotFoundException("Person with id " + id + " not found ", "PERSON_NOT_FOUND");
   }
 
   public static EntityNotFoundException forCompany(UUID id) {
     return new EntityNotFoundException("Company with id " + id + " not found", "COMPANY_NOT_FOUND");
+  }
+
+  public static EntityNotFoundException forLink(UUID personId, UUID companyId) {
+    return new EntityNotFoundException(
+        "Link with Company id " + companyId + " and Person id" + personId + " not found",
+        "LINK_NOT_FOUND");
   }
 }

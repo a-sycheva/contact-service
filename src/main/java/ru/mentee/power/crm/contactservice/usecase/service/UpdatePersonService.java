@@ -3,6 +3,7 @@ package ru.mentee.power.crm.contactservice.usecase.service;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.mentee.power.crm.contactservice.domain.exception.BusinessRuleViolationException;
 import ru.mentee.power.crm.contactservice.domain.exception.EntityNotFoundException;
 import ru.mentee.power.crm.contactservice.domain.model.Person;
@@ -15,8 +16,8 @@ public class UpdatePersonService implements UpdatePersonUseCase {
   private final PersonOutPort personOutPort;
 
   @Override
+  @Transactional
   public Person updatePerson(UUID id, Person person) {
-
     Person existingPerson =
         personOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forPerson(id));
 
@@ -30,8 +31,6 @@ public class UpdatePersonService implements UpdatePersonUseCase {
     existingPerson.setEmail(person.getEmail());
     existingPerson.setPhone(person.getPhone());
 
-    return personOutPort
-        .update(existingPerson)
-        .orElseThrow(() -> EntityNotFoundException.forPerson(id));
+    return personOutPort.update(existingPerson).get();
   }
 }
