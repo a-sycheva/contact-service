@@ -57,7 +57,7 @@ public class LinkPersistenceAdapter implements PersonCompanyLinkOutPort {
                     entity.getPerson().getFullName(),
                     entity.getPerson().getEmail(),
                     entity.getPerson().getPhone(),
-                    entity.getRole(),
+                    mapper.stringToRole(entity.getRole()),
                     entity.getTitle()))
         .collect(Collectors.toList());
   }

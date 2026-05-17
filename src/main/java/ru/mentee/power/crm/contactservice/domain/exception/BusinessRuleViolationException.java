@@ -32,4 +32,9 @@ public class BusinessRuleViolationException extends RuntimeException {
         "Company with id " + companyId + " and Person with id " + personId + " already linked",
         "LINK_ALREADY_EXISTS");
   }
+
+  public static BusinessRuleViolationException inviteConflict(String email, UUID companyId) {
+    return new BusinessRuleViolationException(
+        "Active invite to " + email + " from " + companyId + "already exists", "INVITE_CONFLICT");
+  }
 }

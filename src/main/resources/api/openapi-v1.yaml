@@ -237,8 +237,46 @@ paths:
           description: Удалена
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/v1/invites:
+    post:
+      tags: [invites]
+      summary: Создание приглашения
+      operationId: createInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInviteRequest'
+      responses:
+        '201':
+          description: Приглашение создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Company не найдена
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Активное приглашение уже существует
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
 components:
   schemas:
+
     CreatePersonRequest:
       type: object
       required: [fullName, email]
@@ -273,7 +311,7 @@ components:
         name: { type: string, minLength: 1, maxLength: 255 }
         inn: { type: string, minLength: 10, maxLength: 12, pattern: '^\d+$' }
         personId: { type: string, format: uuid }
-        role: { type: string, description: Роль в компании, pattern: '^(OWNER|EMPLOYEE)$' }
+        role: { type: string, pattern: '^(OWNER|CUSTOMER|EMPLOYEE)$', description: Роль в компании }
         title: { type: string, maxLength: 100,  nullable: true, description: Должность в компании (опционально) }
 
     UpdateCompanyRequest:
@@ -291,7 +329,7 @@ components:
         fullName: { type: string }
         email: { type: string, format: email }
         phone: { type: string, nullable: true }
-        role: { type: string, description: Роль в компании, pattern: '^(OWNER|EMPLOYEE)$' }
+        role: { type: string, pattern: '^(OWNER|CUSTOMER|EMPLOYEE)$', description: Роль в компании }
         title: { type: string, nullable: true}
 
     CompanyResponse:
@@ -312,7 +350,7 @@ components:
         id: { type: string, format: uuid }
         personId: { type: string, format: uuid }
         companyId: { type: string, format: uuid }
-        role: { type: string, description: Роль в компании, pattern: '^(OWNER|EMPLOYEE)$' }
+        role: { type: string, pattern: '^(OWNER|CUSTOMER|EMPLOYEE)$', description: Роль в компании }
         title: { type: string, maxLength: 100, nullable: true, description: Должность в компании (опционально) }
         createdAt: { type: string, format: date-time }
 
@@ -320,8 +358,33 @@ components:
       type: object
       required: [ role ]
       properties:
-        role: { type: string, description: Роль в компании, pattern: '^(OWNER|EMPLOYEE)$' }
+        role: { type: string, pattern: '^(OWNER|CUSTOMER|EMPLOYEE)$', description: Роль в компании }
         title: { type: string, maxLength: 100,  nullable: true, description: Должность в компании (опционально) }
+
+    CreateInviteRequest:
+      type: object
+      required: [email, companyId, role, expiresInHours]
+      properties:
+        email: { type: string, format: email, maxLength: 255 }
+        companyId: { type: string, format: uuid }
+        role: { type: string, pattern: '^(CUSTOMER|EMPLOYEE)$', description: Роль в компании }
+        inviterPersonId: { type: string, format: uuid, nullable: true}
+        expiresInHours: { type: integer, min: 1, max: 168, default: 24}
+
+    InviteResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email:
+          type: string
+        companyId: { type: string, format: uuid }
+        companyName: { type: string, minLength: 1, maxLength: 255 }
+        role: { type: string, pattern: '^(CUSTOMER|EMPLOYEE)$', description: Роль в компании }
+        status: { type: string, pattern: '^(PENDING|ACCEPTED|CANCELLED|EXPIRED)$', description: Статус приглашения }
+        inviterPersonId: { type: string, format: uuid, nullable: true }
+        referralCode: { type: string, minLength: 8, maxLength: 8 }
+        createdAt: { type: string, format: date-time}
+        expiresAt: { type: string, format: date-time, description: "Дата и время истечения приглашения" }
 
     PageResponse:
       type: object
