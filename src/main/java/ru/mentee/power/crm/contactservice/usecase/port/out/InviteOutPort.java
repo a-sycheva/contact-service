@@ -8,4 +8,6 @@ public interface InviteOutPort {
   boolean existsInviteWithStatus(String email, UUID companyId, InviteStatus status);
 
   Invite createInvite(Invite invite);
+
+  boolean existsByReferralCode(String referralCode);
 }

@@ -35,9 +35,17 @@ public class InviteService implements InviteUseCase {
     }
 
     invite.setExpiresAt(invite.getCreatedAt().plusHours(expiresInHours));
-    invite.setReferralCode(generateReferralCode());
+    invite.setReferralCode(generateUniqueReferralCode());
 
     return inviteOutPort.createInvite(invite);
+  }
+
+  private String generateUniqueReferralCode() {
+    String code;
+    do {
+      code = generateReferralCode();
+    } while (inviteOutPort.existsByReferralCode(code));
+    return code;
   }
 
   private static String generateReferralCode() {

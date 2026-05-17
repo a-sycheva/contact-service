@@ -26,4 +26,9 @@ public class InvitePersistenceAdapter implements InviteOutPort {
     InviteEntity inviteEntity = mapper.toEntity(invite);
     return mapper.toDomain(repository.save(inviteEntity));
   }
+
+  @Override
+  public boolean existsByReferralCode(String referralCode) {
+    return repository.existsByReferralCode(referralCode);
+  }
 }

@@ -9,4 +9,6 @@ import ru.mentee.power.crm.contactservice.domain.model.InviteStatus;
 @Repository
 public interface InviteJpaRepository extends JpaRepository<InviteEntity, UUID> {
   boolean existsByEmailAndCompanyIdAndStatus(String email, UUID companyId, InviteStatus status);
+
+  boolean existsByReferralCode(String referralCode);
 }

@@ -85,7 +85,8 @@ class InviteRestControllerIT {
         .andExpect(jsonPath("role").value("CUSTOMER"))
         .andExpect(jsonPath("status").value("PENDING"))
         .andExpect(jsonPath("inviterPersonId").isEmpty())
-        .andExpect(jsonPath("referralCode").exists())
+        .andExpect(jsonPath("$.referralCode").exists())
+        .andExpect(jsonPath("$.referralCode").value(matchesPattern("^[A-Za-z0-9]{8}$")))
         .andExpect(jsonPath("createdAt").exists())
         .andExpect(jsonPath("expiresAt").exists());
   }
