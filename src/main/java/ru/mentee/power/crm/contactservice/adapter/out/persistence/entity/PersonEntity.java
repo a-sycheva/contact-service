@@ -6,8 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -43,5 +43,5 @@ public class PersonEntity {
   private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "person")
-  private Set<PersonCompanyLinkEntity> companyLinks = new HashSet<>();
+  private List<PersonCompanyLinkEntity> companyLinks = new ArrayList<>();
 }
