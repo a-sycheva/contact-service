@@ -8,3 +8,6 @@ databaseChangeLog:
   - include:
       file: migrations/003_create_person_company_links.sql
       relativeToChangelogFile: true
+  - include:
+      file: migrations/004_create_invites.sql
+      relativeToChangelogFile: true
