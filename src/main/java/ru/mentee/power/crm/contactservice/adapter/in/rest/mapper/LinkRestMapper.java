@@ -18,12 +18,16 @@ public interface LinkRestMapper {
   LinkResponse toResponse(PersonCompanyLinkValueObject vo);
 
   default PersonRole toDomainRole(String stringRole) {
-    if (stringRole == null || stringRole.isBlank()) { return null;}
+    if (stringRole == null || stringRole.isBlank()) {
+      return null;
+    }
     return PersonRole.valueOf(stringRole);
   }
 
   default String toStringRole(PersonRole domainRole) {
-    if (domainRole == null) { return null;}
+    if (domainRole == null) {
+      return null;
+    }
     return domainRole.name();
   }
 }
