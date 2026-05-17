@@ -9,4 +9,6 @@ public interface GetCompanyUseCase {
   Page<Company> findByNamePageable(String name, Pageable pageable);
 
   Company getById(UUID id);
+
+  Company findById(UUID id);
 }

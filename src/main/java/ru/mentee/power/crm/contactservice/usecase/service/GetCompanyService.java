@@ -28,4 +28,9 @@ public class GetCompanyService implements GetCompanyUseCase {
   public Company getById(UUID id) {
     return companyOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forCompany(id));
   }
+
+  @Override
+  public Company findById(UUID id) {
+    return companyOutPort.findById(id).orElseThrow(() -> EntityNotFoundException.forCompany(id));
+  }
 }
