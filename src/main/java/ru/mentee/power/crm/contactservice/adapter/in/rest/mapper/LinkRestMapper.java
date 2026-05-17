@@ -17,14 +17,13 @@ public interface LinkRestMapper {
 
   LinkResponse toResponse(PersonCompanyLinkValueObject vo);
 
-  default PersonRole toDomainRole(ru.mentee.power.crm.contactservice.adapter.in.rest.dto.PersonRole dtoRole) {
-    if (dtoRole == null) return null;
-    return PersonRole.valueOf(dtoRole.name());
+  default PersonRole toDomainRole(String stringRole) {
+    if (stringRole == null || stringRole.isBlank()) { return null;}
+    return PersonRole.valueOf(stringRole);
   }
 
-  default ru.mentee.power.crm.contactservice.adapter.in.rest.dto.PersonRole toDtoRole(PersonRole domainRole) {
-    if (domainRole == null) return null;
-    return ru.mentee.power.crm.contactservice.adapter.in.rest.dto.PersonRole.valueOf(domainRole.name());
+  default String toStringRole(PersonRole domainRole) {
+    if (domainRole == null) { return null;}
+    return domainRole.name();
   }
-
 }
